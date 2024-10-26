@@ -145,3 +145,6 @@ results/
 
 # weblinx
 bg_wl_data/
+
+# webcanvas
+tests/webcanvas/*

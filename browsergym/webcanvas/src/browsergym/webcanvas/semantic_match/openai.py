@@ -1,4 +1,3 @@
-
 import os
 import openai
 
@@ -11,7 +10,9 @@ class GPTGenerator:
         self.model = model
         self.client = openai.OpenAI(api_key=openai_api_key)
 
-    def request(self, messages: list = None, max_tokens: int = 500, temperature: float = 0.7) -> (str, str):
+    def request(
+        self, messages: list = None, max_tokens: int = 500, temperature: float = 0.7
+    ) -> (str, str):
         try:
             answer = self.chat(messages, max_tokens, temperature)
             choice = answer.choices[0]
@@ -22,13 +23,13 @@ class GPTGenerator:
 
     def chat(self, messages, max_tokens=500, temperature=0.7):
         data = {
-            'model': self.model,
-            'max_tokens': max_tokens,
-            'temperature': temperature,
-            'messages': messages,
+            "model": self.model,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": messages,
         }
-        if hasattr(self, 'response_format'):
-            data['response_format'] = self.response_format
+        if hasattr(self, "response_format"):
+            data["response_format"] = self.response_format
 
         return self.client.chat.completions.create(**data)
 

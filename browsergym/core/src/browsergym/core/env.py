@@ -1,4 +1,5 @@
 import copy
+import json
 import logging
 import re
 import time
@@ -9,7 +10,6 @@ from typing import Literal, Optional
 import gymnasium as gym
 import numpy as np
 import playwright.sync_api
-import json
 
 from . import _get_global_playwright
 from .action.base import execute_python_code
@@ -76,8 +76,7 @@ class BrowserEnv(gym.Env, ABC):
         pw_chromium_kwargs: dict = {},
         pw_context_kwargs: dict = {},
         # agent-related arguments
-        action_mapping: Optional[callable] = HighLevelActionSet(
-        ).to_python_code,
+        action_mapping: Optional[callable] = HighLevelActionSet().to_python_code,
     ):
         """
         Instantiate a ready to use BrowserEnv gym environment.
@@ -248,8 +247,7 @@ class BrowserEnv(gym.Env, ABC):
             no_viewport=True if self.resizeable_window else None,
             viewport=viewport if not self.resizeable_window else None,
             record_video_dir=(
-                Path(self.record_video_dir) /
-                "task_video" if self.record_video_dir else None
+                Path(self.record_video_dir) / "task_video" if self.record_video_dir else None
             ),
             record_video_size=viewport,
             locale=locale,
@@ -265,12 +263,14 @@ class BrowserEnv(gym.Env, ABC):
         # there is no concept of active page in playwright
         # https://github.com/microsoft/playwright/issues/2603
         self.context.expose_binding(
-            "browsergym_page_activated", lambda source: self._activate_page_from_js(
-                source["page"])
+            "browsergym_page_activated", lambda source: self._activate_page_from_js(source["page"])
         )
 
         self.context.expose_binding(
-            "handleEvent", lambda selector, event_type, element_text: self._handle_event(selector, event_type, element_text)
+            "handleEvent",
+            lambda selector, event_type, element_text: self._handle_event(
+                selector, event_type, element_text
+            ),
         )
 
         self.context.add_init_script(
@@ -402,8 +402,7 @@ document.addEventListener("visibilitychange", () => {
             self.chat.add_message(role="infeasible", msg=reason)
             self.infeasible_message_received = True
 
-
-        if hasattr(self.task, 'webcanvas'):
+        if hasattr(self.task, "webcanvas"):
             logger.debug(f"Initiating  webcanvas task event listen")
             self._event_listener()
 
@@ -423,11 +422,9 @@ document.addEventListener("visibilitychange", () => {
             self.last_action_error = ""
         except Exception as e:
             self.last_action_error = f"{type(e).__name__}: {e}"
-            match = re.match(
-                "TimeoutError: Timeout ([0-9]+)ms exceeded.", self.last_action_error)
+            match = re.match("TimeoutError: Timeout ([0-9]+)ms exceeded.", self.last_action_error)
             if match:
-                info["action_exec_timeout"] = float(
-                    match.groups()[0]) / 1000  # ms to sec
+                info["action_exec_timeout"] = float(match.groups()[0]) / 1000  # ms to sec
         logger.debug(f"Action executed")
         info["action_exec_stop"] = time.time()
 
@@ -452,8 +449,7 @@ document.addEventListener("visibilitychange", () => {
         logger.debug(f"Initiating task validation")
         # extract reward, done, user_message, info (task-specific)
         reward, done, user_message, task_info = self._task_validate()
-        logger.info(f"WebCanvas task validation result:\n{
-            self.task.evaluate_result}")
+        logger.info(f"WebCanvas task validation result:\n{self.task.evaluate_result}")
         info["task_info"] = task_info
         logger.debug(f"Task validation done")
 
@@ -479,7 +475,8 @@ document.addEventListener("visibilitychange", () => {
         prev_page_history = self.page_history.copy()
         # call validate
         reward, done, user_message, info = self.task.validate(
-            self.page, self.chat.messages, self.last_action)
+            self.page, self.chat.messages, self.last_action
+        )
         # safety fix, in case validate() did mess up the active page and/or page history
         if prev_active_page != self.page or prev_page_history != self.page_history:
             logger.debug(
@@ -512,8 +509,7 @@ document.addEventListener("visibilitychange", () => {
         logger.debug(f"_activate_page_from_js(page) called, page={str(page)}")
         if not page.context == self.context:
             raise RuntimeError(
-                f"Unexpected: activating a page that belongs to a different browser context ({
-                    page})."
+                f"Unexpected: activating a page that belongs to a different browser context ({page})."
             )
 
         # add the activated page to the page history (or move it to last which is the most recent)
@@ -544,14 +540,12 @@ document.addEventListener("visibilitychange", () => {
         # active page should share the same browser context with the environment
         if self.page not in self.context.pages:
             raise RuntimeError(
-                f"Unexpected: active page is not part of the browser context's open pages ({
-                    self.page})."
+                f"Unexpected: active page is not part of the browser context's open pages ({self.page})."
             )
 
         # active page should not be closed
         if self.page.is_closed():
-            raise RuntimeError(
-                f"Unexpected: active page has been closed ({self.page}).")
+            raise RuntimeError(f"Unexpected: active page has been closed ({self.page}).")
 
     def _get_obs(self):
 
@@ -615,18 +609,19 @@ document.addEventListener("visibilitychange", () => {
     def _event_listener(self):
         """Add universal event listener"""
         # # First expose the handle_event function
-        # self.context.expose_function("handleEvent", 
+        # self.context.expose_function("handleEvent",
         #     lambda selector, event_type, element_info: self._handle_event(selector, event_type, element_info))
         logger.info("Setting up event listeners...")  # Add debug log
         try:
             # Then set up event listeners
-            self.page.evaluate("""
+            self.page.evaluate(
+                """
                 () => {
                     const allEvents = [
                         'click', 'input', 'change', 'keydown', 'keyup',
                         'mouseover', 'mouseout', 'mousedown', 'mouseup', 'focus', 'blur'
                     ];
-                    
+
                     function getElementSelector(element) {
                         if (!element) return null;
                         // Try to get unique selector for the element
@@ -655,7 +650,7 @@ document.addEventListener("visibilitychange", () => {
                             return null;
                         }
                     }
-                    
+
                     function getElementInfo(element) {
                         return {
                             textContent: element.textContent || '',
@@ -663,13 +658,13 @@ document.addEventListener("visibilitychange", () => {
                             tagName: element.tagName.toLowerCase()
                         };
                     }
-                    
+
                     allEvents.forEach(eventType => {
                         document.addEventListener(eventType, (event) => {
                             const element = event.target;
                             const selector = getElementSelector(element);
                             const elementInfo = getElementInfo(element);
-                            
+
                             window.handleEvent(
                                 selector,
                                 eventType,
@@ -678,7 +673,8 @@ document.addEventListener("visibilitychange", () => {
                         }, true);
                     });
                 }
-            """)
+            """
+            )
             logger.info("Event listeners setup completed")
         except Exception as e:
             logger.error(f"Failed to setup event listeners: {str(e)}")
@@ -689,20 +685,22 @@ document.addEventListener("visibilitychange", () => {
         """
         try:
             element_info = json.loads(element_info_str)
-            logger.info(f"Event received - selector: {selector}, type: {event_type}, info: {element_info}")
-            
+            logger.info(
+                f"Event received - selector: {selector}, type: {event_type}, info: {element_info}"
+            )
+
             # Create current event
             current_event = {
                 "selector": selector,
                 "status": True,
                 "target_value": element_info.get("value") or element_info.get("textContent", ""),
-                "event_type": event_type
+                "event_type": event_type,
             }
-            
+
             # Update task events
-            if hasattr(self.task, 'update_events'):
+            if hasattr(self.task, "update_events"):
                 self.task.update_events([current_event])
-                
+
         except json.JSONDecodeError:
             logger.error(f"Failed to parse element info: {element_info_str}")
         except Exception as e:

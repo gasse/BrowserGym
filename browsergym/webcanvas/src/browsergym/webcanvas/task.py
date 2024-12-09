@@ -41,26 +41,26 @@ class GenericWebCanvasTask(AbstractBrowserTask):
             "selector": None,
             "status": True,
             "target_value": None,
-            "event_type": None
+            "event_type": None,
         }
 
         if task_id is None:
-            raise ValueError(
-                f"One and only one of 'task_id' must be provided (task_id={task_id})."
-            )
+            raise ValueError(f"One and only one of 'task_id' must be provided (task_id={task_id}).")
 
         # read the list of all WebCanvas task configs
         import browsergym.webcanvas as wcs
-        all_configs_str = importlib.resources.files(wcs).joinpath(
-            "data/mind2web-live_test_20241024.json").read_text()
+
+        all_configs_str = (
+            importlib.resources.files(wcs)
+            .joinpath("data/mind2web-live_test_20241024.json")
+            .read_text()
+        )
         all_task_configs = json.loads(all_configs_str)
         all_task = WebCanvasInstance.read_task_configs(all_task_configs)
         if task_id is not None and task_id < len(all_task):
             task_configs = all_task[task_id]
         else:
-            raise ValueError(
-                f"Could not find any task config with task_id={task_id}."
-            )
+            raise ValueError(f"Could not find any task config with task_id={task_id}.")
 
         self.task_configs = task_configs
         self.trace_info = []
@@ -93,10 +93,7 @@ class GenericWebCanvasTask(AbstractBrowserTask):
         return True
 
     def validate(
-        self,
-        page: playwright.sync_api.Page,
-        chat_messages: list[str],
-        action: str = ""
+        self, page: playwright.sync_api.Page, chat_messages: list[str], action: str = ""
     ) -> Tuple[float, bool, str, dict]:
         reward, done, msg, info = 0, False, "", {}
 
@@ -113,8 +110,14 @@ class GenericWebCanvasTask(AbstractBrowserTask):
         actions = WebCanvasInstance.parse_bid_from_action(action)
         if len(actions) > 0:
             for action_type, bid, target_value in actions:
-                self.evaluation_step, self.step_score_rate, self.match_result, self.task_finished = WebCanvasInstance.evaluate_events(
-                    page, self.evaluation_step, self.current_event, self.reference_evaluate_steps)
+                (
+                    self.evaluation_step,
+                    self.step_score_rate,
+                    self.match_result,
+                    self.task_finished,
+                ) = WebCanvasInstance.evaluate_events(
+                    page, self.evaluation_step, self.current_event, self.reference_evaluate_steps
+                )
 
                 step_action_info["evaluation"].append(
                     {
@@ -123,7 +126,7 @@ class GenericWebCanvasTask(AbstractBrowserTask):
                         "target_value": target_value,
                         "step_score_rate": self.step_score_rate,
                         "match_result": self.match_result,
-                        "task_status": self.task_finished
+                        "task_status": self.task_finished,
                     }
                 )
                 if self.task_finished:

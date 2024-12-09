@@ -6,30 +6,18 @@ from .semantic_match.prompt_constructor import SemanticMatchPromptConstructor
 from .semantic_match.openai import GPTGenerator35
 
 
-MapTagNameList = [
-    "span",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "div",
-    "li",
-    "ul",
-    "p"
-]
+MapTagNameList = ["span", "h1", "h2", "h3", "h4", "h5", "h6", "div", "li", "ul", "p"]
 
 
-class StepEvaluator():
+class StepEvaluator:
     def __init__(self):
         pass
 
 
 class URLEvaluator(StepEvaluator):
+    """URL Evaluation Scoring"""
 
-    '''URL Evaluation Scoring'''
-    @ staticmethod
+    @staticmethod
     def url_exact_match(input_url, reference_answer, key=False):
         if key:
             try:
@@ -41,11 +29,10 @@ class URLEvaluator(StepEvaluator):
         else:
             input_answer = input_url
         input_answer = unquote(input_answer)
-        result_score = MatchFunction.exact_match(
-            input_answer, reference_answer)
+        result_score = MatchFunction.exact_match(input_answer, reference_answer)
         return result_score
 
-    @ staticmethod
+    @staticmethod
     def url_include_match(input_url, reference_answer, key=None):
         # print(input_url, reference_answer)
         if key:
@@ -64,12 +51,11 @@ class URLEvaluator(StepEvaluator):
             except:
                 input_answer = input_url
         input_answer = unquote(input_answer)
-        result_score = MatchFunction.include_match(
-            input_answer, reference_answer)
+        result_score = MatchFunction.include_match(input_answer, reference_answer)
         # print("score:", result_score, input_answer)
         return result_score
 
-    @ staticmethod
+    @staticmethod
     def url_semantic_match(input_url, semantic_method, key=False):
         if key:
             try:
@@ -81,22 +67,22 @@ class URLEvaluator(StepEvaluator):
         else:
             input_answer = input_url
         input_answer = unquote(input_answer)
-        result_score = MatchFunction.semantic_match(
-            input_answer, semantic_method)
+        result_score = MatchFunction.semantic_match(input_answer, semantic_method)
         return result_score
 
 
 class ElementEvaluator(StepEvaluator):
-    '''Element evaluation and scoring'''
+    """Element evaluation and scoring"""
 
     @staticmethod
     def is_same_element(page, input_element_handle, reference_element_handle):
         is_same_element = page.evaluate(
             "(elements) => elements[0] === elements[1]",
-            [input_element_handle, reference_element_handle])
+            [input_element_handle, reference_element_handle],
+        )
         return int(is_same_element)
 
-    @ staticmethod
+    @staticmethod
     def path_exact_match(input_answer, reference_answer, method, page):
         score = 0
         if method == "xpath":
@@ -129,23 +115,29 @@ class ElementEvaluator(StepEvaluator):
                 input_element_handle = input_element.element_handle()
                 reference_element_handle = reference_element.element_handle()
                 if (input_element is not None) and (reference_element is not None):
-                    score = ElementEvaluator.is_same_element(page, input_element_handle=input_element_handle,
-                                                             reference_element_handle=reference_element_handle)
+                    score = ElementEvaluator.is_same_element(
+                        page,
+                        input_element_handle=input_element_handle,
+                        reference_element_handle=reference_element_handle,
+                    )
                     try:
                         reference_tag = page.evaluate(
-                            "(element) => element.tagName.toLowerCase()", reference_element_handle)
+                            "(element) => element.tagName.toLowerCase()", reference_element_handle
+                        )
                         if reference_tag in MapTagNameList:
                             trace_up_count = 0
                             current_element = reference_element
                             while trace_up_count < 3 and score == 0:
                                 trace_up_count += 1
-                                parent_element = current_element.locator(
-                                    "xpath=..")
+                                parent_element = current_element.locator("xpath=..")
                                 parent_element_handle = parent_element.element_handle()
                                 current_element = parent_element
                                 if parent_element:
-                                    parent_score = ElementEvaluator.is_same_element(page, input_element_handle=input_element_handle,
-                                                                                    reference_element_handle=parent_element_handle)
+                                    parent_score = ElementEvaluator.is_same_element(
+                                        page,
+                                        input_element_handle=input_element_handle,
+                                        reference_element_handle=parent_element_handle,
+                                    )
                                     score = max(score, parent_score)
                     except Exception as e:
                         print(e)
@@ -154,55 +146,49 @@ class ElementEvaluator(StepEvaluator):
                 score = 0
         return score
 
-    @ staticmethod
+    @staticmethod
     def path_included_match(input_answer, reference_answer, method, html_content):
         # TODO Add path inclusion matching method
-        result_score = MatchFunction.include_match(
-            input_answer, reference_answer)
+        result_score = MatchFunction.include_match(input_answer, reference_answer)
         return result_score
 
-    @ staticmethod
+    @staticmethod
     def element_value_exact_match(input_answer, reference_answer):
         # TODO fuzzy check if the input_answer is on the same page as the reference_answer
-        result_score = MatchFunction.exact_match(
-            input_answer, reference_answer)
+        result_score = MatchFunction.exact_match(input_answer, reference_answer)
         return result_score
 
-    @ staticmethod
+    @staticmethod
     def element_value_include_match(input_answer, reference_answer):
         # TODO fuzzy check if the input_answer is on the same page as the reference_answer
-        result_score = MatchFunction.include_match(
-            input_answer, reference_answer)
+        result_score = MatchFunction.include_match(input_answer, reference_answer)
         return result_score
 
-    @ staticmethod
+    @staticmethod
     def element_value_semantic_match(input_answer, semantic_method):
         # TODO fuzzy check if the input_answer is on the same page as the reference_answer
         if len(input_answer) == 0:
             return 0
-        result_score = MatchFunction.semantic_match(
-            input_answer, semantic_method)
+        result_score = MatchFunction.semantic_match(input_answer, semantic_method)
         return result_score
 
 
 class TextEvaluator(StepEvaluator):
-    '''Text evaluation and scoring'''
-    @ staticmethod
+    """Text evaluation and scoring"""
+
+    @staticmethod
     def text_exact_match(input_answer, reference_answer):
-        result_score = MatchFunction.exact_match(
-            input_answer, reference_answer)
+        result_score = MatchFunction.exact_match(input_answer, reference_answer)
         return result_score
 
-    @ staticmethod
+    @staticmethod
     def text_included_match(input_answer, reference_answer):
-        result_score = MatchFunction.include_match(
-            input_answer, reference_answer)
+        result_score = MatchFunction.include_match(input_answer, reference_answer)
         return result_score
 
-    @ staticmethod
+    @staticmethod
     def text_semantic_match(input_answer, semantic_method):
-        result_score = MatchFunction.semantic_match(
-            input_answer, semantic_method, semantic_method)
+        result_score = MatchFunction.semantic_match(input_answer, semantic_method, semantic_method)
         return result_score
 
 
@@ -210,19 +196,18 @@ class MatchFunction:
     def __init__(self):
         pass
 
-    @ staticmethod
+    @staticmethod
     def exact_match(input_answer, reference_answer) -> int:
         return 1 if input_answer == reference_answer else 0
 
-    @ staticmethod
+    @staticmethod
     def include_match(input_answer, reference_answer) -> int:
         return 1 if reference_answer in input_answer else 0
 
-    @ staticmethod
+    @staticmethod
     def semantic_match(input_answer, semantic_method) -> float:
         GPT35 = GPTGenerator35()
-        semantic_request = SemanticMatchPromptConstructor(
-        ).construct(input_answer, semantic_method)
+        semantic_request = SemanticMatchPromptConstructor().construct(input_answer, semantic_method)
         score = None
         for i in range(3):
             try:

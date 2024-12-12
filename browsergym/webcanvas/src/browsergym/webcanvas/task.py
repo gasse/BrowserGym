@@ -72,9 +72,6 @@ class GenericWebCanvasTask(AbstractBrowserTask):
         page.goto(start_url, timeout=30000)
         return self.goal, {}
 
-    def teardown(self) -> None:
-        pass
-
     @property
     def evaluate_result(self):
         return self.trace_info[-1]

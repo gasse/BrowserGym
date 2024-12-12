@@ -382,9 +382,6 @@ document.addEventListener("visibilitychange", () => {
 
     def step(self, action: str) -> tuple:
 
-        # Setup event listener after page is create
-        self._event_listener()
-
         self.last_action = action
 
         info = {}
@@ -430,8 +427,7 @@ document.addEventListener("visibilitychange", () => {
 
         # wait a bit (for the JavaScript callback to set the active page)
         time.sleep(0.5)  # wait for JS events to be fired (half a second)
-        # trigger all waiting Playwright callbacks on the stack (hack, see https://playwright.dev/java/docs/multithreading)
-        self.context.cookies()
+        self.context.cookies()  # trigger all waiting Playwright callbacks on the stack (hack, see https://playwright.dev/java/docs/multithreading)
 
         # wait for the network to idle before extracting the observation, reward etc.
         self._wait_dom_loaded()
@@ -445,13 +441,14 @@ document.addEventListener("visibilitychange", () => {
         self._wait_for_user_message()
         logger.debug(f"User message done")
 
-        # if not hasattr(self.task, 'webcanvas'):
         logger.debug(f"Initiating task validation")
         # extract reward, done, user_message, info (task-specific)
         reward, done, user_message, task_info = self._task_validate()
-        logger.info(f"WebCanvas task validation result:\n{self.task.evaluate_result}")
         info["task_info"] = task_info
         logger.debug(f"Task validation done")
+
+        if hasattr(self.task, "webcanvas"):
+            logger.info(f"WebCanvas task validation result:\n{self.task.evaluate_result}")
 
         # add any user message sent by the task to the chat
         if user_message:
@@ -518,8 +515,7 @@ document.addEventListener("visibilitychange", () => {
                 page
             )  # move page to the end of dictionnary
         else:
-            # add page to the end of dictionnary
-            self.page_history[page] = None
+            self.page_history[page] = None  # add page to the end of dictionnary
 
         self.page = page
 

@@ -35,7 +35,7 @@ def parse_args():
     parser.add_argument(
         "--start_url",
         type=str,
-        default="https://www.google.com/",
+        default="https://www.google.com",
         help="Starting URL (only for the openended task).",
     )
     parser.add_argument(

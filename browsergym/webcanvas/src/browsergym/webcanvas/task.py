@@ -64,13 +64,6 @@ class GenericWebCanvasTask(AbstractBrowserTask):
         self.trace_info = []
         self.time_step = 0
 
-    @classmethod
-    def get_task_id(cls):
-        """
-        Generic class for several task ids, this way of obtaining the task id is not compatible for now.
-        """
-        raise NotImplementedError
-
     def setup(self, page: playwright.sync_api.Page, start_url: str = None) -> tuple[str, dict]:
         self.goal, _, _, reference_evaluate_steps = self.task_configs
         self.evaluation_step = reference_evaluate_steps

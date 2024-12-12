@@ -1,5 +1,6 @@
-from .semantic_prompts import BasePrompts
 from jinja2 import Template
+
+from .semantic_prompts import BasePrompts
 
 
 class BasePromptConstructor:

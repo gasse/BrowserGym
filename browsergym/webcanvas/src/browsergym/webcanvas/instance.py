@@ -1,6 +1,3 @@
-import playwright.sync_api
-import os
-import requests
 import re
 
 from .utils import step_evaluate, step_event_evaluate

@@ -1,7 +1,9 @@
 import re
+from urllib.parse import urlparse
 
 from playwright.sync_api import Page
-from .step_score import *
+
+from .step_score import ElementEvaluator, URLEvaluator
 
 
 def get_netloc(url: str) -> str:

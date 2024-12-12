@@ -1,10 +1,10 @@
 import re
-from urllib.parse import parse_qs, urlparse, unquote
+from urllib.parse import parse_qs, unquote, urlparse
+
 from lxml import html
 
-from .semantic_match.prompt_constructor import SemanticMatchPromptConstructor
 from .semantic_match.openai import GPTGenerator35
-
+from .semantic_match.prompt_constructor import SemanticMatchPromptConstructor
 
 MapTagNameList = ["span", "h1", "h2", "h3", "h4", "h5", "h6", "div", "li", "ul", "p"]
 

@@ -1,14 +1,10 @@
-import os
 import openai
-
-
-openai_api_key = os.getenv("OPENAI_API_KEY")
 
 
 class GPTGenerator:
     def __init__(self, model=None):
         self.model = model
-        self.client = openai.OpenAI(api_key=openai_api_key)
+        self.client = openai.OpenAI()
 
     def request(
         self, messages: list = None, max_tokens: int = 500, temperature: float = 0.7
